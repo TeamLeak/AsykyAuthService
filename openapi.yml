@@ -1,0 +1,143 @@
+openapi: 3.0.0
+info:
+  title: AsykyAuthService
+  version: 1.0.0
+  description: Это простой микросервис на Go для аутентификации пользователей и управления сессиями.
+servers:
+  - url: http://localhost:8080
+    description: Локальный сервер
+
+paths:
+  /api/auth:
+    post:
+      summary: Аутентификация пользователя
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: JohnDoe
+                password:
+                  type: string
+                  example: 5f4dcc3b5aa765d61d8327deb882cf99
+      responses:
+        '200':
+          description: Успешная аутентификация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '400':
+          description: Неверный запрос
+        '401':
+          description: Неавторизован
+
+  /api/session/{sessionID}:
+    get:
+      summary: Валидация сессии
+      parameters:
+        - name: sessionID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешная валидация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '404':
+          description: Сессия не найдена
+        '401':
+          description: Сессия истекла
+
+  /api/validate-jwt:
+    post:
+      summary: Валидация JWT токена
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: Session-ID
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешная валидация
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Claims'
+        '401':
+          description: Неавторизован
+
+  /api/regenerate-api-hash/{sessionID}:
+    post:
+      summary: Пересоздание API-хэша
+      parameters:
+        - name: sessionID
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешное пересоздание
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '404':
+          description: Сессия не найдена
+        '401':
+          description: Сессия истекла
+
+components:
+  schemas:
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 123456abcdef
+        created_at:
+          type: string
+          example: 2024-07-05T12:34:56Z
+        last_online:
+          type: string
+          example: 2024-07-05T12:34:56Z
+        user:
+          type: object
+          properties:
+            name:
+              type: string
+              example: John Doe
+        one_time:
+          type: boolean
+          example: true
+        api_hash:
+          type: string
+          example: 7890abcdef123456
+        jwt_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+
+    Claims:
+      type: object
+      properties:
+        username:
+          type: string
+          example: JohnDoe
+        exp:
+          type: integer
+          example: 1516239022

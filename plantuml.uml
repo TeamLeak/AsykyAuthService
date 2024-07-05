@@ -1,0 +1,50 @@
+@startuml
+!define RECTANGLE class
+
+RECTANGLE User {
+  + username: string
+  + password: string
+}
+
+RECTANGLE AuthService {
+  + authHandler(credentials: Credentials): Session
+  + validateSessionHandler(sessionID: string): Session
+  + validateJWTHandler(token: string, sessionID: string): Claims
+  + regenerateAPIHashHandler(sessionID: string): Session
+}
+
+RECTANGLE Session {
+  + id: string
+  + createdAt: string
+  + lastOnline: string
+  + user: User
+  + oneTime: boolean
+  + apiHash: string
+  + jwtToken: string
+}
+
+RECTANGLE Credentials {
+  + username: string
+  + password: string
+}
+
+RECTANGLE Claims {
+  + username: string
+  + exp: integer
+}
+
+User -[hidden]-> AuthService
+AuthService -[hidden]-> Session
+AuthService -[hidden]-> Credentials
+AuthService -[hidden]-> Claims
+
+User --> AuthService : "POST /api/auth"
+AuthService --> Session : "Returns Session"
+User --> AuthService : "GET /api/session/{sessionID}"
+AuthService --> Session : "Returns Session"
+User --> AuthService : "POST /api/validate-jwt"
+AuthService --> Claims : "Returns Claims"
+User --> AuthService : "POST /api/regenerate-api-hash/{sessionID}"
+AuthService --> Session : "Returns Session"
+
+@enduml
